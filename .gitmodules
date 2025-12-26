@@ -1,0 +1,6 @@
+[submodule "submodules/langsplat-rasterization"]
+	path = submodules/langsplat-rasterization
+	url = https://github.com/minghanqin/langsplat-rasterization.git
+[submodule "submodules/simple-knn"]
+	path = submodules/simple-knn
+	url = https://gitlab.inria.fr/bkerbl/simple-knn.git
