@@ -7,24 +7,6 @@
 
 This repository contains the official implementation associated with the paper **"Taking Language Embedded 3D Gaussian Splatting into the Wild"**. We also provide the **PT-OVS benchmark** and **pretrained models** for each scene.
 
-# Direct Download 
-
-If you want to download benchmark labels and pretrained checkpoints directly from the command line (instead of manually clicking files in Google Drive), you can use `gdown`.
-
-Download benchmark + pretrained checkpoints (one command) 
-
-```shell
-pip install -U gdown
-gdown --folder https://drive.google.com/drive/folders/1Ok64q8RyuqiBX62fLh2xVbOeyNg3IgQz -O downloads/malegs_release
-```
-
-## Cloning the Repository
-
-The repository contains submodules, thus please check it out with 
-```shell
-# SSH
-git clone https://github.com/yuzewang1998/takinglangsplatw.git --recursive
-```
 ## 🚀 Overview
 
 The codebase consists of three main components:
