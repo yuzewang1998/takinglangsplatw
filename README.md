@@ -1,80 +1,78 @@
 # [Under Review] Taking Language Embedded 3D Gaussian Splatting into the wild 
-[Yuze Wang](https://yuzewang1998.github.io/), [Junyi Wang](https://junyiwang.github.io/),[Yue Qi](https://scse.buaa.edu.cn/info/1078/2661.htm)<br>| [Webpage](https://langsplat.github.io/) | <br>
-| Pre-trained Models | [BaiduWangpan](https://pan.baidu.com/s/12L83uEi5KlF9ViAZqp0B4w?pwd=dl22) | [GoogleDrive](https://drive.google.com/drive/folders/1ASFXWOwaXP_aSXV2iMDmEfILaDXQXlrE?usp=sharing) |<br>
-| [Datasets](https://drive.google.com/file/d/1QF1Po5p5DwTjFHu6tnTeYs_G0egMVmHt/view?usp=sharing) |<br>
+[Yuze Wang](https://yuzewang1998.github.io/), [Junyi Wang](https://junyiwang.github.io/),[Yue Qi](https://scse.buaa.edu.cn/info/1078/2661.htm)<br>| [Webpage](https://yuzewang1998.github.io/takinglangsplatw/) | <br>
+| [Pre-trained Models](https://drive.google.com/drive/folders/1Ok64q8RyuqiBX62fLh2xVbOeyNg3IgQz) |<br>
+| [Benchmark](https://drive.google.com/drive/folders/1Ok64q8RyuqiBX62fLh2xVbOeyNg3IgQz) |<br>
 
 ![Teaser image](assets/teaser.png)
 
-This repository contains the official authors implementation associated with the paper "aking Language Embedded 3D Gaussian Splatting into the wild". We further provide the benchmark of PT-OVS and trained models for each scenes. 
+This repository contains the official implementation associated with the paper **"Taking Language Embedded 3D Gaussian Splatting into the Wild"**. We also provide the **PT-OVS benchmark** and **pretrained models** for each scene.
 
-<section class="section" id="BibTeX">
-  <div class="container is-max-desktop content">
-    <h2 class="title">BibTeX</h2>
-    <pre><code>@article{qin2023langsplat,
-  title={LangSplat: 3D Language Gaussian Splatting},
-  author={Qin, Minghan and Li, Wanhua and Zhou, Jiawei and Wang, Haoqian and Pfister, Hanspeter},
-  journal={arXiv preprint arXiv:2312.16084},
-  year={2023}
-}</code></pre>
-  </div>
-</section>
+# Direct Download 
+
+If you want to download benchmark labels and pretrained checkpoints directly from the command line (instead of manually clicking files in Google Drive), you can use `gdown`.
+
+Download benchmark + pretrained checkpoints (one command) 
+
+```shell
+pip install -U gdown
+gdown --folder https://drive.google.com/drive/folders/1Ok64q8RyuqiBX62fLh2xVbOeyNg3IgQz -O downloads/malegs_release
+```
 
 ## Cloning the Repository
 
 The repository contains submodules, thus please check it out with 
 ```shell
 # SSH
-git clone git@github.com:minghanqin/LangSplat.git --recursive
+git clone https://github.com/yuzewang1998/takinglangsplatw.git --recursive
 ```
-or
-```shell
-# HTTPS
-git clone https://github.com/minghanqin/LangSplat.git --recursive
-```
+## 🚀 Overview
 
-## Overview
+The codebase consists of three main components:
+- **Optimizer:** A PyTorch-based trainer that produces a MALE-GS model from SfM datasets with language feature inputs.
+- **Scene-wise Autoencoder:** A module designed to alleviate the substantial memory demands of explicit high-dimensional modeling by compressing features.
+- **PT-OVS Benchmark:** A specialized dataset for evaluating Open-Vocabulary Segmentation (OVS) in unconstrained "in-the-wild" environments.
 
-The codebase has 3 main components:
-- A PyTorch-based optimizer to produce a MALE-GS model from SfM datasets with language feature inputs to
-
-- A scene-wise language autoencoder to alleviate substantial memory demands imposed by explicit modeling.
-
-  
 
 The components have been tested on Ubuntu Linux 22.04. Instructions for setting up and running each of them are found in the sections below.
 
-## Datasets
+## 📊 Datasets
+
 In the experiments section of our paper, we primarily utilized the propose PT-OVS dataset.
 
 The PT-OVS dataset is accessible for download via the following link: 
 
 1. [Download Original PhotoTourim Dataset which contains RGB images, corresponding point cloud and camera poses](https://www.cs.ubc.ca/~kmyi/imw2020/data.html): 7 scenes in total (brandenburg_gate, buckingham_palace, notre_dame_front_facede, pantheon_exterior, taj_mahal, temple_nara_japan, trevi_fountain)
-2. [Download our proposed PT-OVS Benchamrk label](www.baidu.com), put it as the same level of other scenes 
 
-## Optimizer
+2. [Download our proposed PT-OVS Benchamrk label](https://drive.google.com/drive/folders/1Ok64q8RyuqiBX62fLh2xVbOeyNg3IgQz), put it as the same level of other scenes 
 
-The optimizer uses PyTorch and CUDA extensions in a Python environment to produce trained models. 
+   
 
-### Hardware Requirements
+## 🔧 Installation
 
-- CUDA-ready GPU with Compute Capability 7.0+
-- 24 GB VRAM (to train to paper evaluation quality)
+1. Cloning the Repository
 
-### Software Requirements
-- Conda (recommended for easy setup)
-- C++ Compiler for PyTorch extensions (we used VS Code)
-- CUDA SDK 11 for PyTorch extensions (we used 11.8)
-- C++ Compiler and CUDA SDK must be compatible
+Since the repository includes submodules, please clone it recursively:
 
-### Setup
+```
+# SSH
+git clone https://github.com/yuzewang1998/takinglangsplatw.git --recursive
+```
 
-#### Environment Setup
+2. Environment Setup
 
-Our default, provided install method is based on Conda package and environment management:
-```shell
+Our installation is based on Conda. We mainly follow the LangSplat environment setup.
+
+```
 conda env create --file environment.yml
 conda activate malegs
 ```
+
+**Note:** Please also install [segment-anything-langsplat](https://www.google.com/url?sa=E&q=https%3A%2F%2Fgithub.com%2Fminghanqin%2Fsegment-anything-langsplat) and download the SAM checkpoints to ckpts/ from the [official repository](https://www.google.com/url?sa=E&q=https%3A%2F%2Fgithub.com%2Ffacebookresearch%2Fsegment-anything).
+
+### 3. Hardware Requirements
+
+- CUDA-ready GPU with Compute Capability 7.0+
+- 24 GB VRAM (to train to paper evaluation quality)
 
 ### QuickStart
 
@@ -100,19 +98,15 @@ python evaluate_iou_loc_pt.py \
 ### Pipeline
 Follow the ```process.sh``` and extract Language features and uncertainly map for PT dataset on your own PC, this step may takes times.
 
-
-
 - **Step 1: Train the radiance field. **
 
   You can use arbitrary 3DGS-based radiance field reconstruction method, we have test vanilla 3DGS, GS-W, and WE-GS. More advanced in-the-wild radiance field reconstruction method will lead more accurate 3D OVS results. We recommand to use a simplified WE-GS:
 
-   
-
   ```aiignore
-  cd ~/we-gs/bash_train
+cd ~/we-gs/bash_train
   ./train_xxx.sh # attention to add --checkpoint_iteration 20000
   ```
-
+  
   The reconstruction model will be in ```/wegs/output/PT/xxx``` and move it to the PT dataset folder.
 
 - **Step 2: Generate Language Feature and uncertainty maps for the Scenes.**
@@ -137,7 +131,7 @@ Follow the ```process.sh``` and extract Language features and uncertainly map fo
   python test.py --dataset_path ${scene_dir} --dataset_name ${CASE_NAME} --train_feature_func default
   ```
 
-  Our model expect the following dataset structure in the source path location, similar to LangSplat:
+  Our model expect the following dataset structure in the source path location, similar to MALE-GS:
   ```
   <dataset_name>
   |---images
@@ -174,14 +168,14 @@ Follow the ```process.sh``` and extract Language features and uncertainly map fo
   python train.py -s ${scene_dir} -m ./output/${exp_name}/${CASE_NAME} --start_checkpoint ${scene_dir}/${reconstruction_case_name}/chkpnt${ckpt_iter}.pth --feature_level 1 --include_feature --resolution 2 --which_feature_fusion_func ${which_feature_fusion_func} --language_features_name language_features_dim3_${CASE_NAME} --iterations 30_000 
   ```
 
-- **Step 4: Render the LangSplat.**
+- **Step 4: Render the MALE-GS.**
 
   ```
   python render.py -s ${scene_dir} -m ./output/${exp_name}/${CASE_NAME}_1 --feature_level 1 --include_feature --resolution 2   --language_features_name language_features_dim3_${CASE_NAME} --which_feature_fusion_func ${which_feature_fusion_func} --skip_train --skip_test --render_small_batch
   ```
 
 - **Step 5: Eval.**
-  	You can refer to train_bash.sh to input the arguments.
+  Evaluate the performance on the PT-OVS benchmark. You can refer to train_bash.sh to input the arguments.
 
   ```
   python evaluate_iou_loc_pt.py \
