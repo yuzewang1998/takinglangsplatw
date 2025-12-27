@@ -51,12 +51,13 @@ conda activate malegs
 
 **Note:** Please also install [segment-anything-langsplat](https://www.google.com/url?sa=E&q=https%3A%2F%2Fgithub.com%2Fminghanqin%2Fsegment-anything-langsplat) and download the SAM checkpoints to ckpts/ from the [official repository](https://www.google.com/url?sa=E&q=https%3A%2F%2Fgithub.com%2Ffacebookresearch%2Fsegment-anything).
 
-### 3. Hardware Requirements
+
+ 3. Hardware Requirements
 
 - CUDA-ready GPU with Compute Capability 7.0+
 - 24 GB VRAM (to train to paper evaluation quality)
 
-### QuickStart
+## QuickStart
 
 Download the pretrained model, containing constructed WE-GS models, trained autoencoder ckpt, and trained MALE-GS ckpts for a specific scenes, and you can evaluate the method.
 
@@ -73,18 +74,12 @@ python evaluate_iou_loc_pt.py \
         --which_feature_fusion_func ${which_post_feature_fusion_func} \
         --sky_filter
 ```
-
-
-### Environment setup.
-  Please install [segment-anything-langsplat](https://github.com/minghanqin/segment-anything-langsplat) and download the checkpoints of SAM from [here](https://github.com/facebookresearch/segment-anything) to ```ckpts/```.
-### Pipeline
-Follow the ```process.sh``` and extract Language features and uncertainly map for PT dataset on your own PC, this step may takes times.
-
-- **Step 1: Train the radiance field. **
+## Pipeline
+- **Step 1: Train the radiance field.**
 
   You can use arbitrary 3DGS-based radiance field reconstruction method, we have test vanilla 3DGS, GS-W, and WE-GS. More advanced in-the-wild radiance field reconstruction method will lead more accurate 3D OVS results. We recommand to use a simplified WE-GS:
 
-  ```aiignore
+```shell
 cd ~/we-gs/bash_train
   ./train_xxx.sh # attention to add --checkpoint_iteration 20000
   ```
