@@ -35,8 +35,8 @@ Since the repository includes submodules, please clone it recursively:
 
 ```
 # HTTPS
-git clone --recursive https://github.com/yuzewang1998/MALE-GS.git
-cd MALE-GS
+git clone --recursive https://github.com/yuzewang1998/takinglangsplatw.git
+cd takinglangsplatw
 ```
 
 2. Environment Setup
