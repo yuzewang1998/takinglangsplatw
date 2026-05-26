@@ -19,13 +19,13 @@ The components have been tested on Ubuntu Linux 22.04. Instructions for setting 
 
 ## 📊 Datasets
 
-In the experiments section of our paper, we primarily utilized the propose PT-OVS dataset.
+In the experiments section of our paper, we primarily utilized the proposed PT-OVS dataset.
 
 The PT-OVS dataset is accessible for download via the following link: 
 
-1. [Download Original PhotoTourim Dataset which contains RGB images, corresponding point cloud and camera poses](https://www.cs.ubc.ca/~kmyi/imw2020/data.html): 7 scenes in total (brandenburg_gate, buckingham_palace, notre_dame_front_facede, pantheon_exterior, taj_mahal, temple_nara_japan, trevi_fountain)
+1. [Download Original PhotoTourism Dataset which contains RGB images, corresponding point cloud and camera poses](https://www.cs.ubc.ca/~kmyi/imw2020/data.html): 7 scenes in total (brandenburg_gate, buckingham_palace, notre_dame_front_facade, pantheon_exterior, taj_mahal, temple_nara_japan, trevi_fountain)
 
-2. [Download our proposed PT-OVS Benchamrk label](https://drive.google.com/drive/folders/1Ok64q8RyuqiBX62fLh2xVbOeyNg3IgQz), put it as the same level of other scenes 
+2. [Download our proposed PT-OVS Benchmark label](https://drive.google.com/drive/folders/1Ok64q8RyuqiBX62fLh2xVbOeyNg3IgQz), put it at the same level as the other scenes 
 
    
 
@@ -36,20 +36,22 @@ The PT-OVS dataset is accessible for download via the following link:
 Since the repository includes submodules, please clone it recursively:
 
 ```
-# SSH
-git clone https://github.com/yuzewang1998/takinglangsplatw.git --recursive
+# HTTPS
+git clone --recursive https://github.com/yuzewang1998/takinglangsplatw.git
+cd takinglangsplatw
 ```
 
 2. Environment Setup
 
-Our installation is based on Conda. We mainly follow the LangSplat environment setup.
+Our installation is based on Conda. We mainly follow the LangSplat environment setup. Before creating the environment, clone the language-feature preprocessing dependency expected by `environment.yml`:
 
-```
+```shell
+git clone https://github.com/minghanqin/segment-anything-langsplat.git submodules/segment-anything-langsplat
 conda env create --file environment.yml
 conda activate malegs
 ```
 
-**Note:** Please also install [segment-anything-langsplat](https://www.google.com/url?sa=E&q=https%3A%2F%2Fgithub.com%2Fminghanqin%2Fsegment-anything-langsplat) and download the SAM checkpoints to ckpts/ from the [official repository](https://www.google.com/url?sa=E&q=https%3A%2F%2Fgithub.com%2Ffacebookresearch%2Fsegment-anything).
+**Note:** `environment.yml` installs the CUDA rasterization, KNN, and language-feature preprocessing modules used by this repository. Please also download the SAM checkpoints to `ckpts/` from the [official Segment Anything repository](https://github.com/facebookresearch/segment-anything).
 
 
  3. Hardware Requirements
@@ -59,10 +61,10 @@ conda activate malegs
 
 ## QuickStart
 
-Download the pretrained model, containing constructed WE-GS models, trained autoencoder ckpt, and trained MALE-GS ckpts for a specific scenes, and you can evaluate the method.
+Download the pretrained model, containing constructed WE-GS models, trained autoencoder ckpt, and trained MALE-GS ckpts for a specific scene, and you can evaluate the method.
 
 ```shell
-python evaluate_iou_loc_pt.py \
+PYTHONPATH=. python eval/evaluate_iou_loc_pt.py \
         --dataset_name ${CASE_NAME} \
         --feat_dir ${root_path}/output/${exp_name} \
         --ae_ckpt_dir ${root_path}/autoencoder/ckpt \
@@ -77,49 +79,46 @@ python evaluate_iou_loc_pt.py \
 ## Pipeline
 - **Step 1: Train the radiance field.**
 
-  You can use arbitrary 3DGS-based radiance field reconstruction method, we have test vanilla 3DGS, GS-W, and WE-GS. More advanced in-the-wild radiance field reconstruction method will lead more accurate 3D OVS results. We recommand to use a simplified WE-GS:
+  You can use an arbitrary 3DGS-based radiance-field reconstruction method. We have tested vanilla 3DGS, GS-W, and WE-GS; more advanced in-the-wild reconstruction methods can lead to more accurate 3D OVS results. This repository does not include the WE-GS training code, so first prepare a reconstructed radiance field externally (for example with WE-GS) or use the reconstruction checkpoints provided with our pretrained models.
 
-```shell
-cd ~/we-gs/bash_train
-  ./train_xxx.sh # attention to add --checkpoint_iteration 20000
-  ```
-  
-  The reconstruction model will be in ```/wegs/output/PT/xxx``` and move it to the PT dataset folder.
+  The reconstructed model should then be placed under the corresponding PT scene folder and referenced by `--itw_model_path` / `--start_checkpoint` in the following steps.
 
-- **Step 2: Generate Language Feature and uncertainty maps for the Scenes.**
+- **Step 2: Generate language features and uncertainty maps for the scenes.**
 
-  Modify the path of '--dataset_path', '--iteration', '--itw_sh_degree' ,'--itw_source_path','--itw_model_path' (Thats all about the config of reconstructed radiance field)
+  Modify the paths for `--dataset_path`, `--iteration`, `--itw_sh_degree`, `--itw_source_path`, and `--itw_model_path` in `bash_preprocess.sh` to match your reconstructed radiance field.
 
-  ```
-  ./bash_prepprocess.sh
+  ```shell
+  bash bash_preprocess.sh
   ```
 
-  Because the large number of images in unconstrained photo collection, this may take times. So we recommand you to use our provided checkpoints for fast test.
+  Because unconstrained photo collections can contain many images, this step may take time. For a fast test, we recommend using our provided checkpoints.
 
-- **Step 3: Train the uncertainty-awared Autoencoder and get the lower-dims Feature.**
+- **Step 3: Train the uncertainty-aware Autoencoder and get the lower-dimensional features.**
 
-   You can refer to train_bash.sh to input the arguments.
+   You can refer to train_brand.sh to input the arguments.
 
-  ```
+  ```shell
   # train the autoencoder
   cd autoencoder
   python train.py --dataset_path ${scene_dir} --dataset_name ${CASE_NAME} --train_feature_func default --num_epochs 100 --train_with_uncertainly_map --fusion_uncertainly_map_func direct_multiply
+
   # get the compressed language feature of the scene
   python test.py --dataset_path ${scene_dir} --dataset_name ${CASE_NAME} --train_feature_func default
+  cd ..
   ```
 
-  Our model expect the following dataset structure in the source path location, similar to MALE-GS:
+  Our model expects the following dataset structure in the source path location, similar to MALE-GS:
   ```
   <dataset_name>
   |---images
   |   |---<image 0>
   |   |---<image 1>
   |   |---...
-  |---language_feature
+  |---language_features
   |   |---00_f.npy
   |   |---00_s.npy
   |   |---...
-  |---language_feature_dim3
+  |---language_features_dim3_<dataset_name>
   |   |---00_f.npy
   |   |---00_s.npy
   |   |---...
@@ -137,25 +136,25 @@ cd ~/we-gs/bash_train
           |---points3D.bin
   ```
 
-- **Step 3: Train the MALE-GS.**
+- **Step 4: Train the MALE-GS.**
 
-  ​	You can refer to train_bash.sh to input the arguments.
+  ​	You can refer to train_brand.sh to input the arguments.
 
-  ```
-  python train.py -s ${scene_dir} -m ./output/${exp_name}/${CASE_NAME} --start_checkpoint ${scene_dir}/${reconstruction_case_name}/chkpnt${ckpt_iter}.pth --feature_level 1 --include_feature --resolution 2 --which_feature_fusion_func ${which_feature_fusion_func} --language_features_name language_features_dim3_${CASE_NAME} --iterations 30_000 
-  ```
-
-- **Step 4: Render the MALE-GS.**
-
-  ```
-  python render.py -s ${scene_dir} -m ./output/${exp_name}/${CASE_NAME}_1 --feature_level 1 --include_feature --resolution 2   --language_features_name language_features_dim3_${CASE_NAME} --which_feature_fusion_func ${which_feature_fusion_func} --skip_train --skip_test --render_small_batch
+  ```shell
+  python train.py -s ${scene_dir} -m ./output/${exp_name}/${CASE_NAME} --start_checkpoint ${scene_dir}/${reconstruction_case_name}/chkpnt${ckpt_iter}.pth --feature_level 1 --include_feature --resolution 2 --which_feature_fusion_func ${which_feature_fusion_func} --language_features_name language_features_dim3_${CASE_NAME} --iterations 30000
   ```
 
-- **Step 5: Eval.**
-  Evaluate the performance on the PT-OVS benchmark. You can refer to train_bash.sh to input the arguments.
+- **Step 5: Render the MALE-GS.**
 
+  ```shell
+  python render.py -s ${scene_dir} -m ./output/${exp_name}/${CASE_NAME}_1 --feature_level 1 --include_feature --resolution 2 --language_features_name language_features_dim3_${CASE_NAME} --which_feature_fusion_func ${which_feature_fusion_func} --skip_train --skip_test --render_small_batch
   ```
-  python evaluate_iou_loc_pt.py \
+
+- **Step 6: Eval.**
+  Evaluate the performance on the PT-OVS benchmark. You can refer to train_brand.sh to input the arguments.
+
+  ```shell
+  PYTHONPATH=. python eval/evaluate_iou_loc_pt.py \
           --dataset_name ${CASE_NAME} \
           --feat_dir ${root_path}/output/${exp_name} \
           --ae_ckpt_dir ${root_path}/autoencoder/ckpt \
