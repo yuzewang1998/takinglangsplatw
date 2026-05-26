@@ -107,7 +107,7 @@ PYTHONPATH=. python eval/evaluate_iou_loc_pt.py \
 ## Pipeline
 - **Step 1: Train the radiance field.**
 
-  You can use any 3DGS-based radiance-field reconstruction method. We have tested vanilla 3DGS, GS-W, and WE-GS; more advanced in-the-wild reconstruction methods can lead to more accurate 3D OVS results. The WE-GS training code is not included in this repository yet and will be released later. We will also release WE-GS reconstructed models for the PT-OVS scenes; for now, the [Google Drive folder](https://drive.google.com/drive/folders/1Ok64q8RyuqiBX62fLh2xVbOeyNg3IgQz) provides benchmark labels, autoencoder checkpoints, and rendered outputs for the QuickStart evaluation.
+  You can use any 3DGS-based radiance-field reconstruction method. We have tested vanilla 3DGS, GS-W, and WE-GS; more advanced in-the-wild reconstruction methods can lead to more accurate 3D OVS results. The WE-GS training code is not included in this repository yet and will be released later. We have released the WE-GS reconstructed models for the PT-OVS scenes in the [Google Drive folder](https://drive.google.com/drive/folders/1Ok64q8RyuqiBX62fLh2xVbOeyNg3IgQz) to help reproduce the paper results. The same folder also provides benchmark labels, autoencoder checkpoints, and rendered outputs for the QuickStart evaluation.
 
   The reconstructed model should then be placed under the corresponding PT scene folder and referenced by `--itw_model_path` / `--start_checkpoint` in the following steps.
 
