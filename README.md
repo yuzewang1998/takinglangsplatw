@@ -61,9 +61,37 @@ conda activate malegs
 
 ## QuickStart
 
-Download the pretrained model, containing constructed WE-GS models, trained autoencoder ckpt, and trained MALE-GS ckpts for a specific scene, and you can evaluate the method.
+For a fast evaluation-only start, download the released **benchmark**, **autoencoder**, and **output** folders from [Google Drive](https://drive.google.com/drive/folders/1Ok64q8RyuqiBX62fLh2xVbOeyNg3IgQz). These files let you run PT-OVS evaluation directly without retraining the autoencoder or MALE-GS.
+
+After downloading, arrange the files so that the paths match the evaluation script:
+
+```text
+<download_root>
+|---benchmark
+|   |---label
+|       |---<scene_name>
+|           |---*.json
+|           |---*.jpg / *.JPG
+|---autoencoder
+|   |---ckpt
+|       |---<CASE_NAME>
+|           |---best_ckpt.pth
+|---output
+|   |---<exp_name>
+|       |---<CASE_NAME>_1/train/ours_None/renders_npy/*.npy
+|       |---<CASE_NAME>_2/train/ours_None/renders_npy/*.npy
+|       |---<CASE_NAME>_3/train/ours_None/renders_npy/*.npy
+```
+
+Here, `--feat_dir` should point to the downloaded `output/<exp_name>` folder, `--ae_ckpt_dir` should point to the downloaded `autoencoder/ckpt` folder, and `--json_folder` should point to the benchmark label folder for the evaluated scene.
 
 ```shell
+root_path=<download_root>
+CASE_NAME=<CASE_NAME>
+exp_name=<exp_name>
+gt_folder=${root_path}/benchmark/label/<scene_name>
+which_post_feature_fusion_func='post_validMapLevel_avgImageWiseMaxValue|LocMax'
+
 PYTHONPATH=. python eval/evaluate_iou_loc_pt.py \
         --dataset_name ${CASE_NAME} \
         --feat_dir ${root_path}/output/${exp_name} \
@@ -79,7 +107,7 @@ PYTHONPATH=. python eval/evaluate_iou_loc_pt.py \
 ## Pipeline
 - **Step 1: Train the radiance field.**
 
-  You can use any 3DGS-based radiance-field reconstruction method. We have tested vanilla 3DGS, GS-W, and WE-GS; more advanced in-the-wild reconstruction methods can lead to more accurate 3D OVS results. The WE-GS training code is not included in this repository yet and will be released later. For the PT-OVS scenes, we provide WE-GS reconstructed models [here](https://drive.google.com/drive/folders/1Ok64q8RyuqiBX62fLh2xVbOeyNg3IgQz).
+  You can use any 3DGS-based radiance-field reconstruction method. We have tested vanilla 3DGS, GS-W, and WE-GS; more advanced in-the-wild reconstruction methods can lead to more accurate 3D OVS results. The WE-GS training code is not included in this repository yet and will be released later. We will also release WE-GS reconstructed models for the PT-OVS scenes; for now, the [Google Drive folder](https://drive.google.com/drive/folders/1Ok64q8RyuqiBX62fLh2xVbOeyNg3IgQz) provides benchmark labels, autoencoder checkpoints, and rendered outputs for the QuickStart evaluation.
 
   The reconstructed model should then be placed under the corresponding PT scene folder and referenced by `--itw_model_path` / `--start_checkpoint` in the following steps.
 
