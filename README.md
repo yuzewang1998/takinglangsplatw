@@ -1,5 +1,5 @@
 # [TVCG 2026] Taking Language Embedded 3D Gaussian Splatting into the wild 
-[Yuze Wang](https://yuzewang1998.github.io/), [Junyi Wang](https://junyiwang.github.io/),[Yue Qi](https://scse.buaa.edu.cn/info/1078/2661.htm)<br>| [Webpage](https://yuzewang1998.github.io/takinglangsplatw/) | <br>
+[Yuze Wang](https://yuzewang1998.github.io/), [Junyi Wang](https://junyiwang.github.io/),[Yue Qi](https://scse.buaa.edu.cn/info/1078/2661.htm)<br>| [Paper](https://www.computer.org/csdl/journal/tg/2026/05/11474631/2fo8AbfqV1u) | [Webpage](https://yuzewang1998.github.io/takinglangsplatw/) | <br>
 | [Pre-trained Models](https://drive.google.com/drive/folders/1Ok64q8RyuqiBX62fLh2xVbOeyNg3IgQz) |<br>
 | [Benchmark](https://drive.google.com/drive/folders/1Ok64q8RyuqiBX62fLh2xVbOeyNg3IgQz) |<br>
 
