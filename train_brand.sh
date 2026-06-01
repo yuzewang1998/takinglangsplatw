@@ -12,7 +12,7 @@ reconstruction_case_name=brandenburg_gate_${ReconCodebase} # # save the trained 
 #
 # go ahead
 FeatureExtractMethod='VanillaCLIPExtUncetainDM-T-100epoch'
-LangReconMethod='catFeature12dReconUncertainlyTMAM60Kiter_brandenburg_gate'
+LangReconMethod='catFeature12dReconUncertainlyTMAM30Kiter_brandenburg_gate'
 exp_name=${ReconCodebase}_${FeatureExtractMethod}_${LangReconMethod} # wegs_SimpleAugOrigin3var-300epoch_VanillaRecon
 CASE_NAME=${exp_name} # 可以不动，只是标注
 which_feature_fusion_func='aug_wUncertainly_TMAM' # default: use vanilla LangSplat; aug: with 3 aug-view; aug_wUncertainly_TM; aug_wUncertainly:WITH UNCERTAINLY MAP. This parameter only used in the Language Reconstruction Pipeline. For eval, use another: which_post_feature_fusion_func.
@@ -24,9 +24,9 @@ cd ..
 # Training
 #-m LangSplat Output folder, three models will be generated (e.g. [wegs][vanillaCLIPExt][vanillaRecon]_1;[wegs][vanillaCLIPExt][vanillaRecon]_2;[wegs][vanillaCLIPExt][vanillaRecon]_3)
 #-start_checkpoint: the 3DGS Reconstruction ckpt( 3DGS or WEGS)
-python train.py -s ${scene_dir} -m ./output/${exp_name}/${CASE_NAME} --start_checkpoint ${scene_dir}/${reconstruction_case_name}/chkpnt${ckpt_iter}.pth --feature_level 1 --include_feature --resolution 2 --which_feature_fusion_func ${which_feature_fusion_func} --language_features_name language_features_dim3_${CASE_NAME} --iterations 60_000 
-python train.py -s ${scene_dir} -m ./output/${exp_name}/${CASE_NAME} --start_checkpoint ${scene_dir}/${reconstruction_case_name}/chkpnt${ckpt_iter}.pth --feature_level 2 --include_feature --resolution 2 --which_feature_fusion_func ${which_feature_fusion_func} --language_features_name language_features_dim3_${CASE_NAME} --iterations 60_000
-python train.py -s ${scene_dir} -m ./output/${exp_name}/${CASE_NAME} --start_checkpoint ${scene_dir}/${reconstruction_case_name}/chkpnt${ckpt_iter}.pth --feature_level 3 --include_feature --resolution 2 --which_feature_fusion_func ${which_feature_fusion_func} --language_features_name language_features_dim3_${CASE_NAME} --iterations 60_000 
+python train.py -s ${scene_dir} -m ./output/${exp_name}/${CASE_NAME} --start_checkpoint ${scene_dir}/${reconstruction_case_name}/chkpnt${ckpt_iter}.pth --feature_level 1 --include_feature --resolution 2 --which_feature_fusion_func ${which_feature_fusion_func} --language_features_name language_features_dim3_${CASE_NAME} --iterations 30_000 
+python train.py -s ${scene_dir} -m ./output/${exp_name}/${CASE_NAME} --start_checkpoint ${scene_dir}/${reconstruction_case_name}/chkpnt${ckpt_iter}.pth --feature_level 2 --include_feature --resolution 2 --which_feature_fusion_func ${which_feature_fusion_func} --language_features_name language_features_dim3_${CASE_NAME} --iterations 30_000
+python train.py -s ${scene_dir} -m ./output/${exp_name}/${CASE_NAME} --start_checkpoint ${scene_dir}/${reconstruction_case_name}/chkpnt${ckpt_iter}.pth --feature_level 3 --include_feature --resolution 2 --which_feature_fusion_func ${which_feature_fusion_func} --language_features_name language_features_dim3_${CASE_NAME} --iterations 30_000 
 
 # Render 
 python render.py -s ${scene_dir} -m ./output/${exp_name}/${CASE_NAME}_1 --feature_level 1 --include_feature --resolution 2   --language_features_name language_features_dim3_${CASE_NAME} --which_feature_fusion_func ${which_feature_fusion_func} --skip_train --skip_test --render_small_batch

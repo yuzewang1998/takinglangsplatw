@@ -37,7 +37,7 @@ def create_video(input_folder, output_folder, output_filename="output.mp4", fps=
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Convert sequence of images to video")
-    parser.add_argument("--input_folder", type=str, default="/home/wangyz/Documents/projects/0working/langsplat-w/output/wegs_VanillaCLIPExtUncetainDM-T-100epoch_catFeature12dReconUncertainlyTMAM60Kiter_pantheon_exterior/wegs_VanillaCLIPExtUncetainDM-T-100epoch_catFeature12dReconUncertainlyTMAM60Kiter_pantheon_exterior_1/eval/ours_None/renders")
+    parser.add_argument("--input_folder", type=str, default="/home/wangyz/Documents/projects/0working/langsplat-w/output/wegs_VanillaCLIPExtUncetainDM-T-100epoch_catFeature12dReconUncertainlyTMAM30Kiter_pantheon_exterior/wegs_VanillaCLIPExtUncetainDM-T-100epoch_catFeature12dReconUncertainlyTMAM30Kiter_pantheon_exterior_1/eval/ours_None/renders")
     parser.add_argument("--output_folder", type=str, default="/home/wangyz/Downloads")
     parser.add_argument("--output_filename", type=str, default="output.mp4")
     parser.add_argument("--fps", type=int, default=30, help="Frames per second for the video")
