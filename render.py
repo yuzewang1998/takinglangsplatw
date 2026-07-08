@@ -12,6 +12,7 @@ import numpy as np
 import torch
 from scene import Scene
 import os
+import json
 from tqdm import tqdm
 from os import makedirs
 from gaussian_renderer import render
@@ -457,7 +458,9 @@ def render_set(model_path, source_path, name, iteration, views, gaussians, pipel
         else:
             rendering = output["language_feature_image"]
             
-        if not args.include_feature:
+        if args.skip_feature_gt:
+            gt = None
+        elif not args.include_feature:
             gt = view.original_image[0:3, :, :]
             
         else:
@@ -504,14 +507,30 @@ def render_sets(dataset : ModelParams, iteration : int, pipeline : PipelineParam
              print('render training split...')
              if args.render_small_batch == True:
                  train_cams = scene.getTrainCameras()
-                 scene_name = dataset.source_path.split('/')[-1]
-                 gt_json_folder = os.listdir(os.path.join(dataset.source_path.split('PT')[0],'PT','label',scene_name))
-                 img_list = [x for x in gt_json_folder if x.endswith('.jpg')]
+                 if args.render_json_folder:
+                     label_dir = args.render_json_folder
+                 else:
+                     scene_name = dataset.source_path.split('/')[-1]
+                     label_dir = os.path.join(dataset.source_path.split('PT')[0], 'PT', 'label', scene_name)
+                 label_names = set()
+                 for label_file in os.listdir(label_dir):
+                     if label_file.endswith(('.jpg', '.JPG', '.jpeg', '.JPEG', '.png', '.PNG')):
+                         label_names.add(os.path.splitext(label_file)[0])
+                     elif label_file.endswith('.json'):
+                         try:
+                             with open(os.path.join(label_dir, label_file), 'r') as f:
+                                 label_data = json.load(f)
+                             image_name = label_data.get('info', {}).get('name')
+                             if image_name:
+                                 label_names.add(os.path.splitext(image_name)[0])
+                         except Exception:
+                             label_names.add(os.path.splitext(label_file)[0])
                  cams = []
                  for i in range(len(train_cams)):
                      this_cam = train_cams[i]
-                     if this_cam.image_name+'.jpg' in img_list:
+                     if this_cam.image_name in label_names:
                          cams.append(this_cam)
+                 print(f'render_small_batch selected {len(cams)} / {len(train_cams)} training cameras from {label_dir}')
              else:
                  cams = scene.getTrainCameras()
              render_set(dataset.model_path, dataset.source_path, "train", scene.loaded_iter, cams, gaussians, pipeline, background, args,dataset.which_feature_fusion_func,dataset.num_aug_rendering)
@@ -536,6 +555,10 @@ if __name__ == "__main__":
     parser.add_argument("--quiet", action="store_true")
     parser.add_argument("--include_feature", action="store_true")
     parser.add_argument("--render_small_batch",action="store_true")
+    parser.add_argument("--render_json_folder", type=str, default=None,
+                        help="Optional label folder used with --render_small_batch to render only benchmark-labeled train images.")
+    parser.add_argument("--skip_feature_gt", action="store_true",
+                        help="Only save rendered outputs and skip loading/saving GT language features.")
 
 
     args = get_combined_args(parser)

@@ -59,9 +59,9 @@ conda activate malegs
 
 ## QuickStart
 
-For a fast evaluation-only start, download the released **benchmark**, **autoencoder**, and **output** folders from [Google Drive](https://drive.google.com/drive/folders/1Ok64q8RyuqiBX62fLh2xVbOeyNg3IgQz). These files let you run PT-OVS evaluation directly without retraining the autoencoder or MALE-GS.
+For a fast evaluation start, download the released **benchmark**, **autoencoder**, and **output** folders from [Google Drive](https://drive.google.com/drive/folders/1Ok64q8RyuqiBX62fLh2xVbOeyNg3IgQz). The released `output` folder contains the trained MALE-GS checkpoints; before running PT-OVS evaluation, render these checkpoints into the `renders_npy` files consumed by `eval/evaluate_iou_loc_pt.py`.
 
-After downloading, arrange the files so that the paths match the evaluation script:
+Arrange the downloaded files as follows:
 
 ```text
 <download_root>
@@ -76,36 +76,60 @@ After downloading, arrange the files so that the paths match the evaluation scri
 |           |---best_ckpt.pth
 |---output
 |   |---<exp_name>
-|       |---<CASE_NAME>_1/train/ours_None/renders_npy/*.npy
-|       |---<CASE_NAME>_2/train/ours_None/renders_npy/*.npy
-|       |---<CASE_NAME>_3/train/ours_None/renders_npy/*.npy
+|       |---<CASE_NAME>_1
+|       |   |---chkpnt30000.pth
+|       |   |---point_cloud/...
+|       |---<CASE_NAME>_2
+|       |   |---chkpnt30000.pth
+|       |   |---point_cloud/...
+|       |---<CASE_NAME>_3
+|           |---chkpnt30000.pth
+|           |---point_cloud/...
 ```
 
-Here, `--feat_dir` should point to the downloaded `output/<exp_name>` folder, `--ae_ckpt_dir` should point to the downloaded `autoencoder/ckpt` folder, and `--json_folder` should point to the benchmark label folder for the evaluated scene.
+You also need the corresponding PT scene folder as `--scene_dir`; it must contain the scene images and COLMAP camera data (`sparse/` or `dense/`) required by `render.py`. The QuickStart script renders only the checkpoint outputs needed by evaluation, so it does not require regenerating the training language-feature GT files.
+
+Then render the three feature levels and evaluate with:
 
 ```shell
-root_path=<download_root>
-CASE_NAME=<CASE_NAME>
-exp_name=<exp_name>
-gt_folder=${root_path}/benchmark/label/<scene_name>
-which_post_feature_fusion_func='post_validMapLevel_avgImageWiseMaxValue|LocMax'
-
-PYTHONPATH=. python eval/evaluate_iou_loc_pt.py \
-        --dataset_name ${CASE_NAME} \
-        --feat_dir ${root_path}/output/${exp_name} \
-        --ae_ckpt_dir ${root_path}/autoencoder/ckpt \
-        --output_dir ${root_path}/eval_result \
-        --mask_thresh 0.4 \
-        --encoder_dims 256 128 64 32 3 \
-        --decoder_dims 16 32 64 128 256 256 512 \
-        --json_folder ${gt_folder} \
-        --which_feature_fusion_func ${which_post_feature_fusion_func} \
-        --sky_filter
+bash scripts/quickstart_render_eval.sh \
+  --root_path <download_root> \
+  --scene_name <scene_name> \
+  --scene_dir <path/to/PT/<scene_name>> \
+  --case_name <CASE_NAME> \
+  --exp_name <exp_name>
 ```
+
+The script creates:
+
+```text
+<download_root>/output/<exp_name>/<CASE_NAME>_1/train/ours_None/renders_npy/*.npy
+<download_root>/output/<exp_name>/<CASE_NAME>_2/train/ours_None/renders_npy/*.npy
+<download_root>/output/<exp_name>/<CASE_NAME>_3/train/ours_None/renders_npy/*.npy
+```
+
+and then runs:
+
+```shell
+PYTHONPATH=. python eval/evaluate_iou_loc_pt.py \
+  --dataset_name <CASE_NAME> \
+  --feat_dir <download_root>/output/<exp_name> \
+  --ae_ckpt_dir <download_root>/autoencoder/ckpt \
+  --output_dir <download_root>/eval_result \
+  --mask_thresh 0.4 \
+  --encoder_dims 256 128 64 32 3 \
+  --decoder_dims 16 32 64 128 256 256 512 \
+  --json_folder <download_root>/benchmark/label/<scene_name> \
+  --which_feature_fusion_func 'post_validMapLevel_avgImageWiseMaxValue|LocMax' \
+  --sky_filter
+```
+
+For MALE-GS evaluation, keep `post_validMapLevel_avgImageWiseMaxValue|LocMax` for `eval/evaluate_iou_loc_pt.py`. The `default` option is for the vanilla 3-channel LangSplat baseline and should not be used to reproduce MALE-GS post-fusion results.
+
 ## Pipeline
 - **Step 1: Train the radiance field.**
 
-  You can use any 3DGS-based radiance-field reconstruction method. We have tested vanilla 3DGS, GS-W, and WE-GS; more advanced in-the-wild reconstruction methods can lead to more accurate 3D OVS results. The WE-GS training code is not included in this repository yet and will be released later. We have released the WE-GS reconstructed models for the PT-OVS scenes in the [Google Drive folder](https://drive.google.com/drive/folders/1Ok64q8RyuqiBX62fLh2xVbOeyNg3IgQz) to help reproduce the paper results. The same folder also provides benchmark labels, autoencoder checkpoints, and rendered outputs for the QuickStart evaluation.
+  You can use any 3DGS-based radiance-field reconstruction method. We have tested vanilla 3DGS, GS-W, and WE-GS; more advanced in-the-wild reconstruction methods can lead to more accurate 3D OVS results. The WE-GS training code is not included in this repository yet and will be released later. We have released the WE-GS reconstructed models for the PT-OVS scenes in the [Google Drive folder](https://drive.google.com/drive/folders/1Ok64q8RyuqiBX62fLh2xVbOeyNg3IgQz) to help reproduce the paper results. The same folder also provides benchmark labels, autoencoder checkpoints, and MALE-GS checkpoints for the QuickStart render-and-evaluate script.
 
   The reconstructed model should then be placed under the corresponding PT scene folder and referenced by `--itw_model_path` / `--start_checkpoint` in the following steps.
 
