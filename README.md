@@ -59,9 +59,23 @@ conda activate malegs
 
 ## QuickStart
 
-For a fast evaluation start, download the released **benchmark**, **autoencoder**, and **output** folders from [Google Drive](https://drive.google.com/drive/folders/1Ok64q8RyuqiBX62fLh2xVbOeyNg3IgQz). The released `output` folder contains the trained MALE-GS checkpoints; before running PT-OVS evaluation, render these checkpoints into the `renders_npy` files consumed by `eval/evaluate_iou_loc_pt.py`.
+For a fast evaluation start, use the released **benchmark**, **autoencoder**, and
+**output** folders from [Google Drive](https://drive.google.com/drive/folders/1Ok64q8RyuqiBX62fLh2xVbOeyNg3IgQz).
+The released `output` folder contains the trained MALE-GS checkpoints and point
+clouds, but it does **not** replace the original PhotoTourism/COLMAP scene
+folder. Before PT-OVS evaluation, the checkpoints must be rendered into the
+`train/ours_None/renders_npy/*.npy` files consumed by
+`eval/evaluate_iou_loc_pt.py`.
 
-Arrange the downloaded files as follows:
+### 1. Download the released MALE-GS assets
+
+You can download them manually from the Drive link above, or use the helper (`--download_only` is also accepted):
+
+```shell
+bash scripts/quickstart_render_eval.sh --download-only --root_path <download_root>
+```
+
+After downloading, arrange or verify the files as follows:
 
 ```text
 <download_root>
@@ -87,20 +101,51 @@ Arrange the downloaded files as follows:
 |           |---point_cloud/...
 ```
 
-You also need the corresponding PT scene folder as `--scene_dir`; it must contain the scene images and COLMAP camera data (`sparse/` or `dense/`) required by `render.py`. The QuickStart script renders only the checkpoint outputs needed by evaluation, so it does not require regenerating the training language-feature GT files.
+### 2. Prepare the scene folder used by `render.py`
 
-Then render the three feature levels and evaluate with:
+Rendering requires RGB images and COLMAP cameras for the same PT-OVS scene. Use
+the corresponding original PhotoTourism scene, or an equivalent COLMAP scene,
+as `--scene_dir`. For PhotoTourism data the expected structure is:
+
+```text
+<scene_dir>
+|---dense
+|   |---images
+|   |---sparse
+|       |---images.bin
+|       |---cameras.bin
+|       |---points3D.bin / points3D.txt
+|---<scene-prefix>.tsv
+```
+
+For a regular COLMAP scene, the expected structure is:
+
+```text
+<scene_dir>
+|---images
+|---sparse
+    |---0
+        |---images.bin / images.txt
+        |---cameras.bin / cameras.txt
+        |---points3D.bin / points3D.txt
+```
+
+If you only downloaded the released `output/<exp_name>/<CASE_NAME>_{1,2,3}`
+folders, you have checkpoints, not renderable input images/cameras; run the
+script with a valid `--scene_dir` before evaluation.
+
+### 3. Render the released checkpoints and evaluate
 
 ```shell
 bash scripts/quickstart_render_eval.sh \
   --root_path <download_root> \
   --scene_name <scene_name> \
-  --scene_dir <path/to/PT/<scene_name>> \
+  --scene_dir <path/to/PT-or-COLMAP/<scene_name>> \
   --case_name <CASE_NAME> \
   --exp_name <exp_name>
 ```
 
-The script creates:
+The script renders the three feature levels into:
 
 ```text
 <download_root>/output/<exp_name>/<CASE_NAME>_1/train/ours_None/renders_npy/*.npy
@@ -108,7 +153,8 @@ The script creates:
 <download_root>/output/<exp_name>/<CASE_NAME>_3/train/ours_None/renders_npy/*.npy
 ```
 
-and then runs:
+Then it validates that the rendered tensors are 12-channel MALE-GS feature maps
+and runs:
 
 ```shell
 PYTHONPATH=. python eval/evaluate_iou_loc_pt.py \
@@ -124,7 +170,26 @@ PYTHONPATH=. python eval/evaluate_iou_loc_pt.py \
   --sky_filter
 ```
 
-For MALE-GS evaluation, keep `post_validMapLevel_avgImageWiseMaxValue|LocMax` for `eval/evaluate_iou_loc_pt.py`. The `default` option is for the vanilla 3-channel LangSplat baseline and should not be used to reproduce MALE-GS post-fusion results.
+For MALE-GS evaluation, keep
+`post_validMapLevel_avgImageWiseMaxValue|LocMax` for
+`eval/evaluate_iou_loc_pt.py`. The `default` option is for the vanilla
+3-channel LangSplat baseline. If post-fusion reports
+`num_view_rendering should be greater than 1`, the rendered `.npy` files are
+3-channel baseline outputs rather than 12-channel MALE-GS outputs; re-render
+with the QuickStart script or with render-time
+`--which_feature_fusion_func aug_wUncertainly_TMAM`.
+
+If you already have valid 12-channel `renders_npy` files, you can skip rendering
+and run only validation + evaluation:
+
+```shell
+bash scripts/quickstart_render_eval.sh \
+  --root_path <download_root> \
+  --scene_name <scene_name> \
+  --case_name <CASE_NAME> \
+  --exp_name <exp_name> \
+  --eval-only
+```
 
 ## Pipeline
 - **Step 1: Train the radiance field.**

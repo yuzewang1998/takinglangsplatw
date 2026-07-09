@@ -11,6 +11,9 @@ Usage:
     --case_name <CASE_NAME> \
     [--exp_name <exp_name>]
 
+Optional download helper:
+  bash scripts/quickstart_render_eval.sh --download_only --root_path <download_root>
+
 This script renders the released MALE-GS checkpoints into the train-split
 renders_npy folders required by eval/evaluate_iou_loc_pt.py, then runs PT-OVS
 evaluation.
@@ -20,11 +23,18 @@ Required layout:
   <download_root>/autoencoder/ckpt/<CASE_NAME>/best_ckpt.pth
   <download_root>/output/<exp_name>/<CASE_NAME>_{1,2,3}/chkpnt30000.pth
 
+Important: the released Google Drive bundle does not replace the PT scene
+folder. Rendering still needs --scene_dir with RGB images plus COLMAP cameras:
+  PT PhotoTourism layout: <scene_dir>/dense/images and <scene_dir>/dense/sparse
+  or COLMAP layout:       <scene_dir>/images and <scene_dir>/sparse/0
+
 Options:
   --root_path PATH        Folder containing benchmark/, autoencoder/, output/.
+                          With --download_only, this is the destination.
   --scene_name NAME       PT-OVS scene name, e.g. trevi_fountain.
   --scene_dir PATH        Full scene folder used by render.py; must contain
-                          images and sparse/ or dense/ camera data.
+                          images and sparse/ or dense/ camera data. Not needed
+                          with --eval-only or --download_only.
   --case_name NAME        Model/eval case name; must match <CASE_NAME>_{1,2,3}.
   --exp_name NAME         Experiment folder under output/. Defaults to CASE_NAME.
   --json_folder PATH      Label folder. Defaults to root_path/benchmark/label/scene_name.
@@ -35,6 +45,10 @@ Options:
   --eval_fusion NAME      Eval-time post fusion. Defaults to post_validMapLevel_avgImageWiseMaxValue|LocMax.
   --language_features_name NAME
                           Defaults to language_features_dim3_<CASE_NAME>.
+  --download-only, --download_only
+                          Download the released Google Drive bundle to root_path
+                          using gdown, then exit. This does not download the
+                          original PT PhotoTourism scene images/cameras.
   --eval-only             Do not run render.py; only validate existing renders and evaluate.
   --render-only           Render and validate, but do not run evaluation.
   --no-sky-filter         Do not pass --sky_filter to evaluation.
@@ -57,6 +71,8 @@ LANGUAGE_FEATURES_NAME=""
 RUN_RENDER=1
 RUN_EVAL=1
 SKY_FILTER=1
+DOWNLOAD_ONLY=0
+DRIVE_URL="https://drive.google.com/drive/folders/1Ok64q8RyuqiBX62fLh2xVbOeyNg3IgQz"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -72,6 +88,7 @@ while [[ $# -gt 0 ]]; do
     --render_fusion) RENDER_FUSION="$2"; shift 2 ;;
     --eval_fusion) EVAL_FUSION="$2"; shift 2 ;;
     --language_features_name) LANGUAGE_FEATURES_NAME="$2"; shift 2 ;;
+    --download-only|--download_only) DOWNLOAD_ONLY=1; RUN_RENDER=0; RUN_EVAL=0; shift ;;
     --eval-only) RUN_RENDER=0; shift ;;
     --render-only) RUN_EVAL=0; shift ;;
     --no-sky-filter) SKY_FILTER=0; shift ;;
@@ -80,8 +97,32 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [[ -z "$ROOT_PATH" || -z "$SCENE_NAME" || -z "$SCENE_DIR" || -z "$CASE_NAME" ]]; then
-  echo "Missing required arguments." >&2
+if [[ -z "$ROOT_PATH" ]]; then
+  echo "Missing required argument: --root_path." >&2
+  usage >&2
+  exit 2
+fi
+
+if [[ "$DOWNLOAD_ONLY" -eq 1 ]]; then
+  mkdir -p "$ROOT_PATH"
+  echo "[QuickStart] Downloading released benchmark/autoencoder/output bundle to ${ROOT_PATH}"
+  echo "[QuickStart] Note: this does not download the original PT PhotoTourism scene images/cameras."
+  if ! python -c "import gdown" >/dev/null 2>&1; then
+    echo "Missing Python package: gdown. Install it with: python -m pip install gdown" >&2
+    exit 1
+  fi
+  python -m gdown --folder --remaining-ok --continue --output "${ROOT_PATH}/" "$DRIVE_URL"
+  exit 0
+fi
+
+if [[ -z "$SCENE_NAME" || -z "$CASE_NAME" ]]; then
+  echo "Missing required arguments: --scene_name and --case_name are required unless --download_only is used." >&2
+  usage >&2
+  exit 2
+fi
+
+if [[ "$RUN_RENDER" -eq 1 && -z "$SCENE_DIR" ]]; then
+  echo "Missing required argument: --scene_dir is required for rendering." >&2
   usage >&2
   exit 2
 fi
@@ -108,16 +149,53 @@ require_path() {
 }
 
 require_path "$ROOT_PATH" "download root"
-require_path "$SCENE_DIR" "scene_dir"
 require_path "$JSON_FOLDER" "benchmark label folder"
 require_path "$OUTPUT_EXP_DIR" "output experiment folder"
-require_path "$AE_CKPT" "autoencoder checkpoint"
 
-for level in 1 2 3; do
-  require_path "${OUTPUT_EXP_DIR}/${CASE_NAME}_${level}/chkpnt30000.pth" "level ${level} checkpoint"
-done
+if [[ "$RUN_EVAL" -eq 1 ]]; then
+  require_path "$AE_CKPT" "autoencoder checkpoint"
+fi
 
 if [[ "$RUN_RENDER" -eq 1 ]]; then
+  require_path "$SCENE_DIR" "scene_dir"
+  for level in 1 2 3; do
+    require_path "${OUTPUT_EXP_DIR}/${CASE_NAME}_${level}/chkpnt30000.pth" "level ${level} checkpoint"
+  done
+
+  if [[ -d "${SCENE_DIR}/dense" ]]; then
+    require_path "${SCENE_DIR}/dense/images" "PhotoTourism RGB images"
+    require_path "${SCENE_DIR}/dense/sparse" "PhotoTourism COLMAP sparse camera folder"
+    require_path "${SCENE_DIR}/dense/sparse/images.bin" "PhotoTourism camera extrinsics"
+    require_path "${SCENE_DIR}/dense/sparse/cameras.bin" "PhotoTourism camera intrinsics"
+    scene_base="$(basename "$SCENE_DIR")"
+    split_file="${SCENE_DIR}/${scene_base%%_*}.tsv"
+    require_path "$split_file" "PhotoTourism train/test split TSV"
+  elif [[ -d "${SCENE_DIR}/sparse" ]]; then
+    require_path "${SCENE_DIR}/images" "COLMAP RGB images"
+    require_path "${SCENE_DIR}/sparse/0" "COLMAP sparse/0 camera folder"
+    if [[ ! -e "${SCENE_DIR}/sparse/0/images.bin" && ! -e "${SCENE_DIR}/sparse/0/images.txt" ]]; then
+      echo "Missing COLMAP camera extrinsics: ${SCENE_DIR}/sparse/0/images.bin or images.txt" >&2
+      exit 1
+    fi
+    if [[ ! -e "${SCENE_DIR}/sparse/0/cameras.bin" && ! -e "${SCENE_DIR}/sparse/0/cameras.txt" ]]; then
+      echo "Missing COLMAP camera intrinsics: ${SCENE_DIR}/sparse/0/cameras.bin or cameras.txt" >&2
+      exit 1
+    fi
+  elif [[ -f "${SCENE_DIR}/transforms_train.json" ]]; then
+    :
+  else
+    cat >&2 <<EOF
+Scene folder is not render-ready: ${SCENE_DIR}
+render.py requires a PT/PhotoTourism or COLMAP scene folder, not only the
+released MALE-GS checkpoint output. Expected one of:
+  - ${SCENE_DIR}/dense/images plus ${SCENE_DIR}/dense/sparse/{images.bin,cameras.bin}
+  - ${SCENE_DIR}/images plus ${SCENE_DIR}/sparse/0
+Download/prepare the corresponding original PhotoTourism/COLMAP scene and pass
+it as --scene_dir. If you do not have the scene folder, use --eval-only only
+after pre-rendered 12-channel renders_npy files already exist.
+EOF
+    exit 1
+  fi
   for level in 1 2 3; do
     model_dir="${OUTPUT_EXP_DIR}/${CASE_NAME}_${level}"
     echo "[QuickStart] Rendering feature level ${level} -> ${model_dir}/train/ours_None/renders_npy"
